@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free Percentage Calculator Online</title>
+  <meta name="description" content="Find percentage of a number, what percent one number is of another, and percentage increase or decrease.">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+    .card { max-width: 420px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { font-size: 24px; text-align: center; margin-top: 0; }
+    h3 { margin: 20px 0 10px; color: #007bff; font-size: 16px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 10px 14px; font-size: 15px; background: #007bff; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .out { margin-top: 8px; font-weight: bold; color: #222; min-height: 22px; }
+    a.home { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; }
+    .info { max-width: 420px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); line-height: 1.7; color: #333; }
+    .info h2 { font-size: 20px; color: #007bff; margin-top: 0; }
+    .info h3 { font-size: 16px; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Percentage Calculator</h1>
+
+    <h3>1. What is X% of Y?</h3>
+    <div class="row">
+      <input type="number" id="a1" placeholder="X (%)">
+      <input type="number" id="b1" placeholder="Y">
+      <button onclick="calc1()">Go</button>
+    </div>
+    <div class="out" id="r1"></div>
+
+    <h3>2. X is what % of Y?</h3>
+    <div class="row">
+      <input type="number" id="a2" placeholder="X">
+      <input type="number" id="b2" placeholder="Y">
+      <button onclick="calc2()">Go</button>
+    </div>
+    <div class="out" id="r2"></div>
+
+    <h3>3. Increase / Decrease from X to Y</h3>
+    <div class="row">
+      <input type="number" id="a3" placeholder="From X">
+      <input type="number" id="b3" placeholder="To Y">
+      <button onclick="calc3()">Go</button>
+    </div>
+    <div class="out" id="r3"></div>
+
+    <a class="home" href="index.html">&larr; Back to Home</a>
+  </div>
+<div class="info">
+    <h2>About This Percentage Calculator</h2>
+    <p>This free percentage calculator solves the three most common percentage problems in seconds: finding a percentage of a number, finding what percent one number is of another, and calculating percentage increase or decrease.</p>
+
+    <h3>How to use it</h3>
+    <p>Pick the calculator that matches your question, type the two numbers and click "Go". The answer appears right below.</p>
+
+    <h3>Formulas</h3>
+    <p>X% of Y = (X ÷ 100) × Y. X is what % of Y = (X ÷ Y) × 100. Percentage change = ((New − Old) ÷ Old) × 100.</p>
+
+    <h3>Examples</h3>
+    <p>20% of 500 is 100. 50 is 25% of 200. If a price goes from 100 to 150, it is a 50% increase.</p>
+
+    <h3>Where is it useful?</h3>
+    <p>Use it for discounts and sale prices, marks and exam results, salary increases, profit and loss, and tax or commission calculations.</p>
+  </div>
+  <script>
+    function val(id) { return parseFloat(document.getElementById(id).value); }
+    function show(id, text) { document.getElementById(id).innerText = text; }
+
+    function calc1() {
+      const x = val("a1"), y = val("b1");
+      if (isNaN(x) || isNaN(y)) return show("r1", "Please enter both numbers.");
+      show("r1", x + "% of " + y + " = " + ((x / 100) * y).toFixed(2));
+    }
+
+    function calc2() {
+      const x = val("a2"), y = val("b2");
+      if (isNaN(x) || isNaN(y) || y === 0) return show("r2", "Please enter valid numbers (Y cannot be 0).");
+      show("r2", x + " is " + ((x / y) * 100).toFixed(2) + "% of " + y);
+    }
+
+    function calc3() {
+      const x = val("a3"), y = val("b3");
+      if (isNaN(x) || isNaN(y) || x === 0) return show("r3", "Please enter valid numbers (X cannot be 0).");
+      const change = ((y - x) / Math.abs(x)) * 100;
+      const word = change >= 0 ? "increase" : "decrease";
+      show("r3", Math.abs(change).toFixed(2) + "% " + word);
+    }
+  </script>
+</body>
+</html>

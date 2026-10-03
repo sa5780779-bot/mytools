@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free EMI Calculator Online</title>
+  <meta name="description" content="Calculate your monthly loan EMI, total interest and total payment with this free EMI calculator.">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+    .card { max-width: 420px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { font-size: 24px; color: #222; margin-top: 0; text-align: center; }
+    label { display: block; margin-bottom: 6px; color: #555; }
+    input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; }
+    button { width: 100%; padding: 12px; font-size: 16px; background: #007bff; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #result { margin-top: 20px; font-size: 17px; color: #222; line-height: 1.8; }
+    .error { color: #dc3545; }
+    .info { max-width: 420px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); line-height: 1.7; color: #333; }
+    .info h2 { font-size: 20px; color: #007bff; margin-top: 0; }
+    .info h3 { font-size: 16px; margin-bottom: 5px; }
+    a.home { display: block; text-align: center; margin: 15px 0; color: #007bff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>EMI Calculator</h1>
+    <label for="amount">Loan Amount</label>
+    <input type="number" id="amount" placeholder="e.g. 500000">
+    <label for="rate">Yearly Interest Rate (%)</label>
+    <input type="number" id="rate" step="0.01" placeholder="e.g. 12">
+    <label for="years">Loan Duration (Years)</label>
+    <input type="number" id="years" step="0.5" placeholder="e.g. 3">
+    <button onclick="calcEMI()">Calculate EMI</button>
+    <div id="result"></div>
+  </div>
+<a class="home" href="index.html">&larr; Back to Home</a>
+
+  <div class="info">
+    <h2>About This EMI Calculator</h2>
+    <p>This free EMI calculator helps you find your monthly loan installment (EMI), the total interest you will pay, and the total amount you will return to the lender. It works for car loans, home loans, personal loans and business loans.</p>
+
+    <h3>How to use it</h3>
+    <p>1. Enter the loan amount. 2. Enter the yearly interest rate. 3. Enter the loan duration in years. 4. Click "Calculate EMI" to see your monthly payment, total interest and total payment.</p>
+
+    <h3>How is EMI calculated?</h3>
+    <p>EMI = P × r × (1 + r)<sup>n</sup> / ((1 + r)<sup>n</sup> − 1), where P is the loan amount, r is the monthly interest rate (yearly rate divided by 12 and by 100), and n is the number of months.</p>
+
+    <h3>Example</h3>
+    <p>For a loan of 500,000 at 12% yearly interest for 3 years, the monthly EMI is about 16,607. Over 36 months you pay around 597,900 in total, of which about 97,900 is interest.</p>
+
+    <h3>Please note</h3>
+    <p>This calculator gives an estimate using the reducing balance method. The final installment may differ depending on your bank's policy, fees and the type of financing, so always confirm the exact figure with your bank.</p>
+  </div>
+  <script>
+    function calcEMI() {
+      const result = document.getElementById("result");
+      const P = parseFloat(document.getElementById("amount").value);
+      const yearlyRate = parseFloat(document.getElementById("rate").value);
+      const years = parseFloat(document.getElementById("years").value);
+
+      if (!P || !yearlyRate || !years || P <= 0 || yearlyRate <= 0 || years <= 0) {
+        result.innerHTML = '<span class="error">Please enter valid numbers in all fields.</span>';
+        return;
+      }
+
+      const r = yearlyRate / 12 / 100;
+      const n = years * 12;
+      const emi = P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+      const total = emi * n;
+      const interest = total - P;
+
+      result.innerHTML =
+        "<b>Monthly EMI:</b> " + emi.toFixed(2) + "<br>" +
+        "<b>Total Interest:</b> " + interest.toFixed(2) + "<br>" +
+        "<b>Total Payment:</b> " + total.toFixed(2);
+    }
+  </script>
+</body>
+</html>

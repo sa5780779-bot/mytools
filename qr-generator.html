@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free QR Code Generator Online</title>
+  <meta name="description" content="Create free QR codes for any link or text and download them as images.">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+    .card { max-width: 420px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+    h1 { font-size: 24px; margin-top: 0; }
+    input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; }
+    button { width: 100%; padding: 12px; font-size: 16px; background: #007bff; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+    button:hover { background: #0056b3; }
+    #qrbox { display: flex; justify-content: center; margin: 15px 0; }
+    #msg { color: #dc3545; min-height: 20px; }
+    #dl { background: #28a745; display: none; }
+    a.home { display: block; margin-top: 15px; color: #007bff; text-decoration: none; }
+    .info { max-width: 420px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); line-height: 1.7; color: #333; text-align: left; }
+    .info h2 { font-size: 20px; color: #007bff; margin-top: 0; }
+    .info h3 { font-size: 16px; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>QR Code Generator</h1>
+    <input type="text" id="text" placeholder="Enter a link or any text">
+    <button onclick="makeQR()">Generate QR Code</button>
+    <p id="msg"></p>
+    <div id="qrbox"></div>
+    <button id="dl" onclick="downloadQR()">Download QR Code</button>
+    <a class="home" href="index.html">&larr; Back to Home</a>
+  </div>
+<div class="info">
+    <h2>About This QR Code Generator</h2>
+    <p>This free tool turns any link or text into a QR code that you can scan with a phone camera or download as an image. No signup is needed.</p>
+
+    <h3>How to use it</h3>
+    <p>1. Type or paste your link or text. 2. Click "Generate QR Code". 3. Scan it with your phone to test it. 4. Click "Download QR Code" to save the image.</p>
+
+    <h3>What is a QR code?</h3>
+    <p>A QR code is a square pattern of black and white dots that stores information such as a website link, phone number or plain text. A phone camera reads it instantly.</p>
+
+    <h3>Where can you use it?</h3>
+    <p>Put it on business cards, shop menus, posters, flyers, invitations or social media profiles so people can open your link without typing it.</p>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    let qr = null;
+
+    function makeQR() {
+      const text = document.getElementById("text").value.trim();
+      const msg = document.getElementById("msg");
+      const box = document.getElementById("qrbox");
+      msg.innerText = "";
+      box.innerHTML = "";
+
+      if (!text) {
+        msg.innerText = "Please enter a link or text.";
+        document.getElementById("dl").style.display = "none";
+        return;
+      }
+
+      qr = new QRCode(box, { text: text, width: 220, height: 220 });
+      document.getElementById("dl").style.display = "block";
+    }
+
+    function downloadQR() {
+      const canvas = document.querySelector("#qrbox canvas");
+      if (!canvas) return;
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = "qrcode.png";
+      a.click();
+    }
+  </script>
+</body>
+</html>
