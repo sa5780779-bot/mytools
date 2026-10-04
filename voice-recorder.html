@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Online Voice Recorder - Free Online Tools</title>
+    <meta name="description" content="Record your voice online with your browser microphone. Live transcription, noise suppression, trim, voice effects, and download as WAV, MP3 or WebM. Free, no signup.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: Arial, sans-serif; }
+        .hero-section { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; padding: 40px 15px; text-align: center; margin-bottom: 30px; }
+        .tool-card { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 30px; text-align: center; }
+        .timer-display { font-size: 36px; font-family: monospace; font-weight: bold; color: #0d6efd; margin: 10px 0; }
+        .record-btn { width: 80px; height: 80px; border-radius: 50%; background-color: #dc3545; border: none; color: white; font-size: 24px; box-shadow: 0 4px 10px rgba(220,53,69,0.4); transition: 0.2s; }
+        .record-btn.recording { background-color: #198754; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        canvas { width: 100%; height: 90px; background: #f1f3f5; border-radius: 8px; }
+        .info-section { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 40px; line-height: 1.7; }
+        .info-section h3 { color: #0d6efd; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .info-section h3:first-child { margin-top: 0; }
+        .info-section p, .info-section ol { color: #555; font-size: 14px; text-align: left; }
+        #status { color: #6c757d; font-size: 14px; min-height: 20px; margin-top: 10px; }
+        .section-title { font-weight: bold; margin: 18px 0 6px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section">
+        <h1>Online Voice Recorder</h1>
+        <p>Record, trim, add effects, transcribe and download your voice, right in your browser.</p>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+
+                <div id="recoverBox" class="alert alert-warning" style="display:none;">
+                    An unsaved recording from your last visit was found.
+                    <button id="recoverBtn" class="btn btn-sm btn-warning ms-2">Recover</button>
+                    <button id="discardBtn" class="btn btn-sm btn-outline-secondary ms-1">Discard</button>
+                </div>
+
+                <div class="tool-card">
+
+                    <div class="text-start mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="noiseChk" checked>
+                            <label class="form-check-label" for="noiseChk">Noise suppression (browser filter)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="silenceChk">
+                            <label class="form-check-label" for="silenceChk">Pause automatically when I stop talking</label>
+                        </div>
+                        <div id="silenceOpts" style="display:none;" class="mb-1">
+                            <label for="silenceLevel" class="form-label small mb-0">Silence level (raise it if it does not pause, lower it if it cuts your words)</label>
+                            <input type="range" class="form-range" id="silenceLevel" min="5" max="60" value="15">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="liveChk">
+                            <label class="form-check-label" for="liveChk">Live transcription (text while you speak)</label>
+                        </div>
+                        <select id="langSel" class="form-select form-select-sm mt-1" style="max-width:220px;">
+                            <option value="en-US">English</option>
+                            <option value="ur-PK">Urdu</option>
+                            <option value="hi-IN">Hindi</option>
+                        </select>
+                        <div class="form-text" id="liveNote">Live transcription works in Chrome and Edge. Your browser sends the audio to its own speech service to create the text. Leave it off if you do not want that.</div>
+                    </div>
+
+                    <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+                    <div class="mb-2 d-flex justify-content-center align-items-center gap-3">
+                        <button class="record-btn" id="recordBtn" title="Start / Stop Recording">🎤</button>
+                        <button class="btn btn-outline-secondary" id="pauseBtn" style="display:none;">Pause</button>
+                    </div>
+
+                    <canvas id="liveCanvas" width="600" height="90"></canvas>
+                    <p id="status">Click the mic to start. Allow microphone access when your browser asks.</p>
+
+                    <div id="resultBox" style="display:none;">
+
+                        <div class="section-title">Your recording</div>
+                        <canvas id="resultCanvas" width="600" height="90"></canvas>
+                        <audio id="audioPlayback" controls class="w-100 mt-2"></audio>
+
+                        <div class="section-title">Trim (remove the start or end)</div>
+                        <div class="text-start">
+                            <label class="form-label small mb-0">Start: <span id="startLabel">0.0 s</span></label>
+                            <input type="range" class="form-range" id="trimStart" min="0" max="1" step="0.01" value="0">
+                            <label class="form-label small mb-0">End: <span id="endLabel">0.0 s</span></label>
+                            <input type="range" class="form-range" id="trimEnd" min="0" max="1" step="0.01" value="1">
+                            <button class="btn btn-sm btn-outline-secondary" id="resetTrim">Reset trim</button>
+                        </div>
+
+                        <div class="section-title">Voice effect</div>
+                        <select class="form-select" id="voiceEffect">
+                            <option value="normal">Normal Voice</option>
+                            <option value="child">Higher Pitch (child-like)</option>
+                            <option value="deep">Deeper Pitch (older-sounding)</option>
+                        </select>
+                        <div class="form-text text-start">The effect is applied to what you hear and to the downloaded file. Higher pitch also sounds faster, deeper pitch sounds slower.</div>
+
+                        <div class="section-title">Download</div>
+                        <div class="d-flex gap-2">
+                            <select class="form-select" id="formatSel" style="max-width:200px;">
+                                <option value="wav">WAV</option>
+                                <option value="mp3">MP3</option>
+                                <option value="webm">WebM</option>
+                            </select>
+                            <button class="btn btn-success flex-grow-1" id="downloadBtn">Download Audio</button>
+                        </div>
+                        <div class="form-text text-start">WebM export plays your clip once in the background, so it takes as long as the clip.</div>
+
+                        <div class="section-title">Transcript</div>
+                        <textarea id="transcriptBox" class="form-control" rows="5" placeholder="Turn on Live transcription before recording to get text here. You can edit it."></textarea>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-primary" id="copyBtn">Copy text</button>
+                            <button class="btn btn-sm btn-outline-primary" id="txtBtn">Download .txt</button>
+                            <button class="btn btn-sm btn-primary" id="keyBtn">Key points</button>
+                        </div>
+                        <div id="keyBox" class="text-start mt-3 small"></div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="index.html" class="btn btn-link text-decoration-none">&larr; Back to Home</a>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>About This Voice Recorder</h3>
+                    <p>This free online voice recorder uses your browser's microphone to record audio. Recording, trimming, effects and downloads all happen on your device. Your audio is not uploaded to our servers.</p>
+
+                    <h3>How to use it</h3>
+                    <ol>
+                        <li>Choose your options (noise suppression, auto-pause, live transcription) and click the red mic button.</li>
+                        <li>Speak. Use Pause and Resume if you need a break. The live waveform shows that the mic is working.</li>
+                        <li>Click the mic again to stop. Drag the Trim sliders to cut the start or end.</li>
+                        <li>Pick a voice effect and a format (WAV, MP3 or WebM), then click Download Audio.</li>
+                    </ol>
+
+                    <h3>Features</h3>
+                    <p>Live waveform, noise suppression, pause on silence, trim, three voice effects, WAV, MP3 and WebM export, live transcription with copy and download, simple key points from your transcript, and automatic local recovery if your browser closes by accident.</p>
+
+                    <h3>Privacy note</h3>
+                    <p>Auto-recovery keeps your latest recording in your own browser storage until you download or discard it. If you turn on live transcription, your browser's speech service (for example Google in Chrome) processes the audio to create text. Key points are made on your device from the transcript text and are not created by an AI model.</p>
+
+                    <h3>Good to know</h3>
+                    <p>If the mic does not work, check that your browser has microphone permission for this site and that no other app is using it. In a private or incognito window, auto-recovery does not work.</p>
+
+                    <h3>Frequently Asked Questions</h3>
+
+                    <p><b>Is my recording uploaded to your server?</b><br>
+                    No. Recording, trimming, effects and downloads happen on your device. The only exception is the optional live transcription, where your browser may send the audio to its own speech service (for example Google in Chrome) to create the text.</p>
+
+                    <p><b>What is the difference between WAV, MP3 and WebM?</b><br>
+                    WAV is uncompressed, gives the best quality and plays almost everywhere, but the file is large. MP3 is much smaller and works on nearly every phone and player. WebM is a compressed format that works well in browsers but some apps and older devices may not open it.</p>
+
+                    <p><b>Does the voice effect change the downloaded file too?</b><br>
+                    Yes. The effect you choose is applied to what you hear and to the file you download. Higher pitch also makes the voice faster, and deeper pitch makes it slower.</p>
+
+                    <p><b>Why is my microphone not working?</b><br>
+                    Click the lock icon next to the web address and allow the microphone for this site. Also close other apps that may be using the microphone, such as video call apps, and check that the correct microphone is selected in your device settings.</p>
+
+                    <p><b>What does noise suppression do?</b><br>
+                    It turns on your browser's built-in filter that reduces steady background sounds like a fan. It helps, but it cannot remove all noise, so recording in a quiet place still gives the best result.</p>
+
+                    <p><b>How does pause on silence work?</b><br>
+                    When you stop talking for about a second and a half, the recorder pauses by itself and continues when you speak again. If it pauses while you talk, lower the silence level. If it does not pause, raise it.</p>
+
+                    <p><b>Can I recover a recording if my browser closed?</b><br>
+                    Yes, in most cases. Your latest recording is kept in your browser's local storage, and a Recover button appears the next time you open this page. This does not work in private or incognito windows, and the saved copy is deleted when you download or discard it.</p>
+
+                    <p><b>Does it work on a phone?</b><br>
+                    Recording works in most modern phone browsers. Live transcription depends on the browser, and it works best in Chrome and Edge. Very long recordings can be slow to process on older phones.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+    <script>
+        const $ = function (id) { return document.getElementById(id); };
+        const recordBtn = $('recordBtn'), pauseBtn = $('pauseBtn'), timerDisplay = $('timerDisplay');
+        const statusText = $('status'), liveCanvas = $('liveCanvas'), resultCanvas = $('resultCanvas');
+        const noiseChk = $('noiseChk'), silenceChk = $('silenceChk'), silenceLevel = $('silenceLevel');
+        const silenceOpts = $('silenceOpts'), liveChk = $('liveChk'), langSel = $('langSel'), liveNote = $('liveNote');
+        const resultBox = $('resultBox'), audioPlayback = $('audioPlayback');
+        const trimStartR = $('trimStart'), trimEndR = $('trimEnd'), startLabel = $('startLabel'), endLabel = $('endLabel');
+        const resetTrim = $('resetTrim'), voiceEffect = $('voiceEffect'), formatSel = $('formatSel'), downloadBtn = $('downloadBtn');
+        const transcriptBox = $('transcriptBox'), copyBtn = $('copyBtn'), txtBtn = $('txtBtn'), keyBtn = $('keyBtn'), keyBox = $('keyBox');
+        const recoverBox = $('recoverBox'), recoverBtn = $('recoverBtn'), discardBtn = $('discardBtn');
+
+        const RATES = { normal: 1.0, child: 1.3, deep: 0.8 };
+        const noop = function () {};
+
+        let mediaRecorder = null, stream = null, audioChunks = [];
+        let isRecording = false, isPaused = false, autoPaused = false, manualPaused = false;
+        let timerInterval = null, elapsedBefore = 0, segmentStart = 0;
+        let ctx = null, srcNode = null, analyser = null, rafId = null, lastSound = 0;
+        let decodedBuffer = null, renderedBuffer = null, wavBlob = null, currentUrl = null;
+        let trimStart = 0, trimEnd = 0, peaks = null, renderSeq = 0, chunkIndex = 0;
+        let recog = null, wantRecog = false, finalText = '';
+
+        /* ---------- Audio context ---------- */
+        function getCtx() {
+            if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+            if (ctx.state === 'suspended') { ctx.resume(); }
+            return ctx;
+        }
+
+        /* ---------- Auto-save (IndexedDB) ---------- */
+        let dbPromise = null;
+        function getDb() {
+            if (!dbPromise) {
+                dbPromise = new Promise(function (resolve, reject) {
+                    if (!window.indexedDB) { reject(new Error('no idb')); return; }
+                    const req = indexedDB.open('vr-autosave', 1);
+                    req.onupgradeneeded = function () { req.result.createObjectStore('chunks'); };
+                    req.onsuccess = function () { resolve(req.result); };
+                    req.onerror = function () { reject(req.error); };
+                });
+                dbPromise.catch(function () { dbPromise = null; });
+            }
+            return dbPromise;
+        }
+        function dbPut(key, blob) {
+            return getDb().then(function (db) {
+                return new Promise(function (res, rej) {
+                    const tx = db.transaction('chunks', 'readwrite');
+                    tx.objectStore('chunks').put(blob, key);
+                    tx.oncomplete = res; tx.onerror = function () { rej(tx.error); };
+                });
+            });
+        }
+        function dbAll() {
+            return getDb().then(function (db) {
+                return new Promise(function (res, rej) {
+                    const req = db.transaction('chunks', 'readonly').objectStore('chunks').getAll();
+                    req.onsuccess = function () { res(req.result); };
+                    req.onerror = function () { rej(req.error); };
+                });
+            });
+        }
+        function dbClear() {
+            return getDb().then(function (db) {
+                return new Promise(function (res, rej) {
+                    const tx = db.transaction('chunks', 'readwrite');
+                    tx.objectStore('chunks').clear();
+                    tx.oncomplete = res; tx.onerror = function () { rej(tx.error); };
+                });
+            });
+        }
+
+        /* ---------- Timer ---------- */
+        function showTime(ms) {
+            const total = Math.floor(ms / 1000);
+            const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+            const p = function (n) { return n < 10 ? '0' + n : String(n); };
+            timerDisplay.textContent = p(h) + ':' + p(m) + ':' + p(s);
+        }
+        function startTimer() {
+            segmentStart = Date.now();
+            timerInterval = setInterval(function () { showTime(elapsedBefore + (Date.now() - segmentStart)); }, 250);
+        }
+
+        /* ---------- Live waveform + silence detection ---------- */
+        function startMeter() {
+            const c = getCtx();
+            srcNode = c.createMediaStreamSource(stream);
+            analyser = c.createAnalyser();
+            analyser.fftSize = 1024;
+            srcNode.connect(analyser);
+            const data = new Uint8Array(analyser.fftSize);
+            const g = liveCanvas.getContext('2d');
+            lastSound = Date.now();
+            function loop() {
+                analyser.getByteTimeDomainData(data);
+                let sum = 0;
+                for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; sum += v * v; }
+                const rms = Math.sqrt(sum / data.length);
+                const w = liveCanvas.width, h = liveCanvas.height;
+                g.clearRect(0, 0, w, h);
+                g.strokeStyle = isPaused ? '#adb5bd' : '#0d6efd';
+                g.lineWidth = 2;
+                g.beginPath();
+                for (let i = 0; i < data.length; i++) {
+                    const x = (i / (data.length - 1)) * w;
+                    const y = (data[i] / 255) * h;
+                    if (i === 0) { g.moveTo(x, y); } else { g.lineTo(x, y); }
+                }
+                g.stroke();
+                handleSilence(rms);
+                rafId = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+        function stopMeter() {
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+            if (srcNode) { srcNode.disconnect(); srcNode = null; }
+            const g = liveCanvas.getContext('2d');
+            g.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+        }
+        function handleSilence(rms) {
+            if (!silenceChk.checked || !isRecording || manualPaused) { lastSound = Date.now(); return; }
+            const threshold = parseInt(silenceLevel.value, 10) / 1000;
+            if (rms >= threshold) {
+                lastSound = Date.now();
+                if (autoPaused) { resumeRec(); }
+            } else if (!isPaused && Date.now() - lastSound > 1500) {
+                pauseRec(true);
+            }
+        }
+
+        /* ---------- Pause / Resume ---------- */
+        function pauseRec(auto) {
+            if (!isRecording || isPaused) { return; }
+            mediaRecorder.pause();
+            elapsedBefore += Date.now() - segmentStart;
+            clearInterval(timerInterval);
+            isPaused = true;
+            autoPaused = auto;
+            manualPaused = !auto;
+            recordBtn.classList.remove('recording');
+            if (auto) {
+                statusText.textContent = 'Paused (silence). It will continue when you speak.';
+            } else {
+                pauseBtn.textContent = 'Resume';
+                statusText.textContent = 'Paused. Press Resume to continue.';
+                stopRecog();
+            }
+        }
+        function resumeRec() {
+            if (!isRecording || !isPaused) { return; }
+            const wasManual = manualPaused;
+            mediaRecorder.resume();
+            isPaused = false; autoPaused = false; manualPaused = false;
+            pauseBtn.textContent = 'Pause';
+            recordBtn.classList.add('recording');
+            statusText.textContent = 'Recording... click the mic to stop.';
+            startTimer();
+            if (wasManual) { startRecog(); }
+        }
+
+        /* ---------- Live transcription ---------- */
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            liveChk.disabled = true; langSel.disabled = true;
+            liveNote.textContent = 'Live transcription is not supported in this browser. Try Chrome or Edge.';
+        }
+        function startRecog() {
+            if (!SR || !liveChk.checked) { return; }
+            wantRecog = true;
+            try {
+                const r = new SR();
+                recog = r;
+                r.continuous = true;
+                r.interimResults = true;
+                r.lang = langSel.value;
+                r.onresult = function (e) {
+                    let interim = '';
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        const t = e.results[i][0].transcript;
+                        if (e.results[i].isFinal) { finalText += t + ' '; } else { interim += t; }
+                    }
+                    transcriptBox.value = finalText + interim;
+                    transcriptBox.scrollTop = transcriptBox.scrollHeight;
+                };
+                r.onerror = function (e) {
+                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                        wantRecog = false;
+                        liveNote.textContent = 'Live transcription is blocked in this browser, but recording still works.';
+                    }
+                };
+                r.onend = function () {
+                    if (wantRecog && isRecording && !manualPaused) { try { r.start(); } catch (err) {} }
+                };
+                r.start();
+            } catch (err) {}
+        }
+        function stopRecog() {
+            wantRecog = false;
+            if (recog) { try { recog.stop(); } catch (err) {} }
+        }
+
+        /* ---------- Recording ---------- */
+        function setControlsRecording(on) {
+            noiseChk.disabled = on; liveChk.disabled = on || !SR; langSel.disabled = on || !SR;
+        }
+
+        recordBtn.addEventListener('click', async function () {
+            if (!isRecording) {
+                try {
+                    const useNoise = noiseChk.checked;
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        audio: { noiseSuppression: useNoise, echoCancellation: useNoise, autoGainControl: true }
+                    });
+                } catch (err) {
+                    statusText.textContent = 'Microphone access was blocked or no microphone was found.';
+                    return;
+                }
+
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                chunkIndex = 0;
+                dbClear().catch(noop);
+                try { localStorage.setItem('vr-mime', mediaRecorder.mimeType || 'audio/webm'); } catch (err) {}
+
+                mediaRecorder.ondataavailable = function (event) {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                        dbPut(chunkIndex++, event.data).catch(noop);
+                    }
+                };
+                mediaRecorder.onstop = function () {
+                    stopMeter();
+                    stopRecog();
+                    stream.getTracks().forEach(function (t) { t.stop(); });
+                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    handleRecording(blob);
+                };
+
+                finalText = '';
+                transcriptBox.value = '';
+                keyBox.textContent = '';
+                mediaRecorder.start(2000);
+                isRecording = true; isPaused = false; autoPaused = false; manualPaused = false;
+                elapsedBefore = 0;
+                showTime(0);
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = '⏹';
+                pauseBtn.textContent = 'Pause';
+                pauseBtn.style.display = 'inline-block';
+                setControlsRecording(true);
+                statusText.textContent = 'Recording... click the mic to stop.';
+                startMeter();
+                startTimer();
+                startRecog();
+            } else {
+                if (!isPaused) { elapsedBefore += Date.now() - segmentStart; }
+                clearInterval(timerInterval);
+                showTime(elapsedBefore);
+                isRecording = false; isPaused = false; autoPaused = false; manualPaused = false;
+                mediaRecorder.stop();
+                recordBtn.classList.remove('recording');
+                recordBtn.textContent = '🎤';
+                pauseBtn.style.display = 'none';
+                setControlsRecording(false);
+            }
+        });
+
+        pauseBtn.addEventListener('click', function () {
+            if (!isRecording) { return; }
+            if (manualPaused) { resumeRec(); }
+            else if (isPaused) { autoPaused = false; manualPaused = true; pauseBtn.textContent = 'Resume'; statusText.textContent = 'Paused. Press Resume to continue.'; stopRecog(); }
+            else { pauseRec(false); }
+        });
+
+        silenceChk.addEventListener('change', function () {
+            silenceOpts.style.display = silenceChk.checked ? 'block' : 'none';
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (isRecording) { e.preventDefault(); e.returnValue = ''; }
+        });
+
+        /* ---------- Decode, trim, effect, preview ---------- */
+        function decodeAudio(arrayBuffer) {
+            const c = getCtx();
+            return new Promise(function (resolve, reject) {
+                const p = c.decodeAudioData(arrayBuffer, resolve, reject);
+                if (p && p.catch) { p.catch(reject); }
+            });
+        }
+
+        function fmtSec(s) { return s.toFixed(1) + ' s'; }
+        function updateTrimLabels() {
+            startLabel.textContent = fmtSec(trimStart);
+            endLabel.textContent = fmtSec(trimEnd);
+        }
+
+        function computePeaks(buf, n) {
+            const d = buf.getChannelData(0);
+            const step = Math.max(1, Math.floor(d.length / n));
+            const stride = Math.max(1, Math.floor(step / 50));
+            const out = [];
+            for (let i = 0; i < n; i++) {
+                let min = 1, max = -1;
+                const s = i * step, e = Math.min(d.length, s + step);
+                for (let j = s; j < e; j += stride) { const v = d[j]; if (v < min) { min = v; } if (v > max) { max = v; } }
+                if (min > max) { min = 0; max = 0; }
+                out.push([min, max]);
+            }
+            return out;
+        }
+        function drawWave() {
+            if (!peaks || !decodedBuffer) { return; }
+            const g = resultCanvas.getContext('2d');
+            const w = resultCanvas.width, h = resultCanvas.height, mid = h / 2;
+            g.clearRect(0, 0, w, h);
+            g.fillStyle = '#e9ecef'; g.fillRect(0, 0, w, h);
+            g.fillStyle = '#0d6efd';
+            for (let i = 0; i < peaks.length; i++) {
+                const top = mid - peaks[i][1] * mid;
+                const hh = Math.max(1, (peaks[i][1] - peaks[i][0]) * mid);
+                g.fillRect(i, top, 1, hh);
+            }
+            const d = decodedBuffer.duration;
+            const x1 = (trimStart / d) * w, x2 = (trimEnd / d) * w;
+            g.fillStyle = 'rgba(0,0,0,0.45)';
+            g.fillRect(0, 0, x1, h);
+            g.fillRect(x2, 0, w - x2, h);
+        }
+
+        function bufferToWav(ab) {
+            const ch = ab.numberOfChannels, sr = ab.sampleRate;
+            const dataLen = ab.length * ch * 2;
+            const out = new ArrayBuffer(44 + dataLen);
+            const v = new DataView(out);
+            function w(o, s) { for (let i = 0; i < s.length; i++) { v.setUint8(o + i, s.charCodeAt(i)); } }
+            w(0, 'RIFF'); v.setUint32(4, 36 + dataLen, true); w(8, 'WAVE'); w(12, 'fmt ');
+            v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, ch, true);
+            v.setUint32(24, sr, true); v.setUint32(28, sr * ch * 2, true); v.setUint16(32, ch * 2, true);
+            v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, dataLen, true);
+            const chans = [];
+            for (let c = 0; c < ch; c++) { chans.push(ab.getChannelData(c)); }
+            let pos = 44;
+            for (let i = 0; i < ab.length; i++) {
+                for (let c = 0; c < ch; c++) {
+                    const s = Math.max(-1, Math.min(1, chans[c][i]));
+                    v.setInt16(pos, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                    pos += 2;
+                }
+            }
+            return new Blob([out], { type: 'audio/wav' });
+        }
+
+        async function renderEffect() {
+            if (!decodedBuffer) { return; }
+            const seq = ++renderSeq;
+            statusText.textContent = 'Applying changes...';
+            const rate = RATES[voiceEffect.value] || 1.0;
+            const sr = decodedBuffer.sampleRate;
+            const dur = Math.max(0.05, trimEnd - trimStart);
+            const length = Math.max(1, Math.ceil((dur * sr) / rate));
+            const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+            const off = new OC(decodedBuffer.numberOfChannels, length, sr);
+            const source = off.createBufferSource();
+            source.buffer = decodedBuffer;
+            source.playbackRate.value = rate;
+            source.connect(off.destination);
+            source.start(0, trimStart, dur);
+            const rendered = await off.startRendering();
+            if (seq !== renderSeq) { return; }
+            renderedBuffer = rendered;
+            wavBlob = bufferToWav(rendered);
+            if (currentUrl) { URL.revokeObjectURL(currentUrl); }
+            currentUrl = URL.createObjectURL(wavBlob);
+            audioPlayback.src = currentUrl;
+            statusText.textContent = 'Recording ready. Press play to listen.';
+        }
+
+        async function handleRecording(blob) {
+            statusText.textContent = 'Processing your recording...';
+            try {
+                const ab = await blob.arrayBuffer();
+                decodedBuffer = await decodeAudio(ab);
+                const d = decodedBuffer.duration;
+                trimStart = 0; trimEnd = d;
+                trimStartR.max = d.toFixed(2); trimEndR.max = d.toFixed(2);
+                trimStartR.value = 0; trimEndR.value = d.toFixed(2);
+                updateTrimLabels();
+                peaks = computePeaks(decodedBuffer, resultCanvas.width);
+                resultBox.style.display = 'block';
+                drawWave();
+                await renderEffect();
+                dbClear().catch(noop);
+            } catch (err) {
+                statusText.textContent = 'Could not process this recording in your browser. Please try Chrome or Edge.';
+            }
+        }
+
+        trimStartR.addEventListener('input', function () {
+            let v = parseFloat(trimStartR.value);
+            if (v > trimEnd - 0.1) { v = Math.max(0, trimEnd - 0.1); trimStartR.value = v; }
+            trimStart = v; updateTrimLabels(); drawWave();
+        });
+        trimEndR.addEventListener('input', function () {
+            let v = parseFloat(trimEndR.value);
+            if (v < trimStart + 0.1) { v = trimStart + 0.1; trimEndR.value = v; }
+            trimEnd = Math.min(v, decodedBuffer ? decodedBuffer.duration : v); updateTrimLabels(); drawWave();
+        });
+        trimStartR.addEventListener('change', renderEffect);
+        trimEndR.addEventListener('change', renderEffect);
+        resetTrim.addEventListener('click', function () {
+            if (!decodedBuffer) { return; }
+            trimStart = 0; trimEnd = decodedBuffer.duration;
+            trimStartR.value = 0; trimEndR.value = trimEnd.toFixed(2);
+            updateTrimLabels(); drawWave(); renderEffect();
+        });
+        voiceEffect.addEventListener('change', function () { if (decodedBuffer) { renderEffect(); } });
+
+        /* ---------- Export ---------- */
+        function saveBlob(blob, name) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        }
+
+        function bufferToMp3(ab) {
+            if (typeof lamejs === 'undefined') { throw new Error('MP3 library not loaded'); }
+            const ch = Math.min(2, ab.numberOfChannels);
+            const enc = new lamejs.Mp3Encoder(ch, ab.sampleRate, 128);
+            function toInt16(f) {
+                const o = new Int16Array(f.length);
+                for (let i = 0; i < f.length; i++) { const s = Math.max(-1, Math.min(1, f[i])); o[i] = s < 0 ? s * 0x8000 : s * 0x7FFF; }
+                return o;
+            }
+            const left = toInt16(ab.getChannelData(0));
+            const right = ch === 2 ? toInt16(ab.getChannelData(1)) : null;
+            const parts = [], block = 1152;
+            for (let i = 0; i < left.length; i += block) {
+                const l = left.subarray(i, i + block);
+                const buf = ch === 2 ? enc.encodeBuffer(l, right.subarray(i, i + block)) : enc.encodeBuffer(l);
+                if (buf.length) { parts.push(new Uint8Array(buf)); }
+            }
+            const end = enc.flush();
+            if (end.length) { parts.push(new Uint8Array(end)); }
+            return new Blob(parts, { type: 'audio/mpeg' });
+        }
+
+        function bufferToWebm(ab) {
+            return new Promise(function (resolve, reject) {
+                const c = getCtx();
+                const dest = c.createMediaStreamDestination();
+                const src = c.createBufferSource();
+                src.buffer = ab;
+                src.connect(dest);
+                const rec = new MediaRecorder(dest.stream);
+                const parts = [];
+                rec.ondataavailable = function (e) { if (e.data && e.data.size) { parts.push(e.data); } };
+                rec.onstop = function () {
+                    const type = rec.mimeType || 'audio/webm';
+                    resolve({ blob: new Blob(parts, { type: type }), ext: type.indexOf('mp4') !== -1 ? 'm4a' : 'webm' });
+                };
+                rec.onerror = reject;
+                src.onended = function () { setTimeout(function () { if (rec.state !== 'inactive') { rec.stop(); } }, 200); };
+                rec.start();
+                src.start();
+            });
+        }
+
+        downloadBtn.addEventListener('click', async function () {
+            if (!renderedBuffer) { return; }
+            const fmt = formatSel.value;
+            downloadBtn.disabled = true;
+            try {
+                let blob, name;
+                if (fmt === 'wav') {
+                    blob = wavBlob; name = 'recorded-voice.wav';
+                } else if (fmt === 'mp3') {
+                    statusText.textContent = 'Creating MP3...';
+                    await new Promise(function (r) { setTimeout(r, 30); });
+                    blob = bufferToMp3(renderedBuffer); name = 'recorded-voice.mp3';
+                } else {
+                    statusText.textContent = 'Exporting WebM. This takes as long as your clip...';
+                    const r = await bufferToWebm(renderedBuffer);
+                    blob = r.blob; name = 'recorded-voice.' + r.ext;
+                }
+                saveBlob(blob, name);
+                statusText.textContent = 'Downloaded: ' + name;
+            } catch (err) {
+                statusText.textContent = 'This format could not be created. Please try WAV.';
+            }
+            downloadBtn.disabled = false;
+        });
+
+        /* ---------- Transcript tools ---------- */
+        copyBtn.addEventListener('click', function () {
+            const t = transcriptBox.value;
+            if (!t) { return; }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(t).then(function () { statusText.textContent = 'Transcript copied.'; }, noop);
+            } else {
+                transcriptBox.select(); document.execCommand('copy');
+                statusText.textContent = 'Transcript copied.';
+            }
+        });
+        txtBtn.addEventListener('click', function () {
+            const t = transcriptBox.value;
+            if (!t) { return; }
+            saveBlob(new Blob([t], { type: 'text/plain' }), 'transcript.txt');
+        });
+
+        const STOP = new Set(('the a an and or but if of to in on at for with from by is are was were be been this that these those it its as not no so we you he she they them his her our your i me my do does did have has had will would can could should may might just than then there here what which who when where how also very more most some any about into over under again only own same such too'.split(' ')));
+
+        keyBtn.addEventListener('click', function () {
+            const text = transcriptBox.value.trim();
+            keyBox.textContent = '';
+            const words = text.split(/\s+/).filter(Boolean);
+            if (words.length < 15) {
+                keyBox.textContent = 'Not enough text yet. Record a little more with live transcription turned on.';
+                return;
+            }
+            let sentences = text.split(/[.!?\u06D4\u061F]+\s*/).map(function (s) { return s.trim(); }).filter(Boolean);
+            if (sentences.length < 3) {
+                sentences = [];
+                for (let i = 0; i < words.length; i += 14) { sentences.push(words.slice(i, i + 14).join(' ')); }
+            }
+            const freq = {};
+            words.forEach(function (w) {
+                const k = w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                if (k.length > 3 && !STOP.has(k)) { freq[k] = (freq[k] || 0) + 1; }
+            });
+            const scored = sentences.map(function (s, idx) {
+                const ws = s.split(/\s+/);
+                let score = 0;
+                ws.forEach(function (w) { const k = w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); score += freq[k] || 0; });
+                return { s: s, idx: idx, score: score / Math.sqrt(ws.length) };
+            });
+            const count = Math.min(5, Math.max(2, Math.ceil(sentences.length / 3)));
+            const top = scored.slice().sort(function (a, b) { return b.score - a.score; }).slice(0, count)
+                .sort(function (a, b) { return a.idx - b.idx; });
+            const title = document.createElement('div');
+            title.innerHTML = '<b>Key points</b> <span class="text-muted">(picked automatically from your transcript)</span>';
+            const ul = document.createElement('ul');
+            top.forEach(function (t) { const li = document.createElement('li'); li.textContent = t.s; ul.appendChild(li); });
+            keyBox.appendChild(title);
+            keyBox.appendChild(ul);
+        });
+
+        /* ---------- Recovery ---------- */
+        dbAll().then(function (chunks) {
+            if (chunks && chunks.length) { recoverBox.style.display = 'block'; }
+        }).catch(noop);
+
+        recoverBtn.addEventListener('click', function () {
+            dbAll().then(function (chunks) {
+                let mime = 'audio/webm';
+                try { mime = localStorage.getItem('vr-mime') || mime; } catch (err) {}
+                recoverBox.style.display = 'none';
+                handleRecording(new Blob(chunks, { type: mime }));
+            }).catch(function () { statusText.textContent = 'Could not recover the saved recording.'; });
+        });
+        discardBtn.addEventListener('click', function () {
+            dbClear().catch(noop);
+            recoverBox.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
