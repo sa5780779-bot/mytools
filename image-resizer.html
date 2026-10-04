@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Image Resizer - Free Online Tools</title>
+    <meta name="description" content="Resize your photos online by width, height or percentage, keep the aspect ratio, and download as JPG, PNG or WEBP. Free, no signup, works in your browser.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: Arial, sans-serif; }
+        .hero-section { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; padding: 40px 15px; text-align: center; margin-bottom: 30px; }
+        .tool-card { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 30px; }
+        .drop-zone { border: 2px dashed #0d6efd; border-radius: 8px; padding: 40px 20px; text-align: center; background: #fdfdfe; cursor: pointer; transition: 0.2s; }
+        .drop-zone:hover, .drop-zone.dragover { background: #f1f6ff; }
+        .preview-img { max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 15px; display: none; }
+        .info-section { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 40px; line-height: 1.7; }
+        .info-section h3 { color: #0d6efd; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .info-section h3:first-child { margin-top: 0; }
+        .info-section p, .info-section ol { color: #555; font-size: 14px; }
+        #status { min-height: 22px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section">
+        <h1>Free Image Resizer</h1>
+        <p>Resize your photos by pixels or percentage and convert them to JPG, PNG or WEBP, right in your browser.</p>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="tool-card">
+
+                    <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+                        <h5>Click to choose an image, or drag and drop it here</h5>
+                        <p class="text-muted small mb-0">Works with JPG, PNG and WEBP</p>
+                        <input type="file" id="imageInput" accept="image/*" class="d-none">
+                    </div>
+
+                    <div class="text-center">
+                        <img id="imagePreview" class="preview-img" alt="Preview of your image">
+                        <p class="small text-muted mt-2 mb-0" id="origInfo"></p>
+                    </div>
+
+                    <div id="controlSection" class="mt-4" style="display: none;">
+                        <hr>
+
+                        <div class="mb-3">
+                            <span class="fw-bold d-block mb-1">Quick size:</span>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-pct="25">25%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-pct="50">50%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-pct="75">75%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-pct="100">Original</button>
+                            </div>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <label for="widthInput" class="form-label fw-bold">Width (px):</label>
+                                <input type="number" class="form-control" id="widthInput" min="1">
+                            </div>
+                            <div class="col-6">
+                                <label for="heightInput" class="form-label fw-bold">Height (px):</label>
+                                <input type="number" class="form-control" id="heightInput" min="1">
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="lockChk" checked>
+                            <label class="form-check-label" for="lockChk">Keep aspect ratio (do not stretch the image)</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="formatSelect" class="form-label fw-bold">Save as:</label>
+                            <select class="form-select" id="formatSelect">
+                                <option value="image/jpeg">JPG / JPEG</option>
+                                <option value="image/png">PNG</option>
+                                <option value="image/webp">WEBP</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="qualityRow">
+                            <label for="qualityRange" class="form-label fw-bold">Quality: <span id="qualityVal">90</span>%</label>
+                            <input type="range" class="form-range" id="qualityRange" min="30" max="100" value="90">
+                            <div class="form-text">Lower quality gives a smaller file. This applies to JPG and WEBP.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-2">
+                            <button class="btn btn-primary" id="resizeBtn">Resize &amp; Download Image</button>
+                        </div>
+                    </div>
+
+                    <p id="status" class="text-center mt-2 mb-0"></p>
+
+                    <div class="text-center mt-3">
+                        <a href="index.html" class="btn btn-link text-decoration-none">&larr; Back to Home</a>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>About This Free Image Resizer</h3>
+                    <p>This free online image resizer changes the width and height of your photo in pixels or by percentage and lets you save it as JPG, PNG or WEBP. Everything happens inside your browser. Your photo is not uploaded to any server.</p>
+
+                    <h3>How to use it</h3>
+                    <ol>
+                        <li>Click the box or drag and drop your image into it.</li>
+                        <li>Choose a quick size (25%, 50%, 75%) or type a new width or height. With "Keep aspect ratio" on, the other value changes automatically.</li>
+                        <li>Pick the format and, for JPG or WEBP, the quality.</li>
+                        <li>Click "Resize &amp; Download Image". The new file size is shown after it is created.</li>
+                    </ol>
+
+                    <h3>Where is it useful?</h3>
+                    <p>Use it to make photos smaller for email, WhatsApp, forms and job or visa applications that ask for a size limit, to prepare images for a website, or to convert between JPG, PNG and WEBP.</p>
+
+                    <h3>Frequently Asked Questions</h3>
+
+                    <p><b>Are my photos uploaded anywhere?</b><br>
+                    No. The image is processed on your own device. Nothing is sent to our servers.</p>
+
+                    <p><b>Will resizing reduce the quality?</b><br>
+                    Making an image smaller usually looks fine. Making it larger than the original makes it look soft or blurry because no new detail can be created. JPG and WEBP also compress the image, so a lower quality setting gives a smaller file with some loss of detail. PNG keeps all detail but the file is often bigger.</p>
+
+                    <p><b>How can I make the file size smaller (in KB)?</b><br>
+                    Reduce the width and height, save as JPG or WEBP, and lower the quality slider a little. Try a few settings until the size suits you.</p>
+
+                    <p><b>Which format should I choose?</b><br>
+                    JPG is best for photos. PNG is best for logos, screenshots and images with transparent areas. WEBP gives small files and works in modern browsers and apps.</p>
+
+                    <p><b>What happens to transparent areas when I save as JPG?</b><br>
+                    JPG does not support transparency, so transparent areas become white. Choose PNG or WEBP to keep transparency.</p>
+
+                    <p><b>Is there a size limit?</b><br>
+                    Very large images (above about 10,000 pixels on a side, or around 80 million pixels in total) are not supported because browsers and phones limit how big an image can be. Photos from phones and cameras work fine.</p>
+
+                    <p><b>Can I resize many images at once?</b><br>
+                    Not yet. This tool resizes one image at a time.</p>
+
+                    <p><b>Why does my image not open?</b><br>
+                    Some formats, such as HEIC from certain iPhones, cannot be opened by every browser. Convert the photo to JPG or PNG first, or take a screenshot of it, and try again.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = function (id) { return document.getElementById(id); };
+        const dropZone = $('dropZone'), imageInput = $('imageInput'), imagePreview = $('imagePreview');
+        const origInfo = $('origInfo'), controlSection = $('controlSection');
+        const widthInput = $('widthInput'), heightInput = $('heightInput'), lockChk = $('lockChk');
+        const formatSelect = $('formatSelect'), qualityRow = $('qualityRow'), qualityRange = $('qualityRange'), qualityVal = $('qualityVal');
+        const resizeBtn = $('resizeBtn'), statusEl = $('status');
+
+        const MAX_SIDE = 10000;
+        const MAX_PIXELS = 80000000;
+
+        let imgEl = null, currentFile = null, objectUrl = null, ratio = 1;
+
+        function setStatus(msg, isError) {
+            statusEl.textContent = msg;
+            statusEl.className = 'text-center mt-2 mb-0 ' + (isError ? 'text-danger' : (msg ? 'text-success' : ''));
+        }
+
+        function fmtBytes(b) {
+            if (b < 1024) { return b + ' B'; }
+            if (b < 1024 * 1024) { return (b / 1024).toFixed(1) + ' KB'; }
+            return (b / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function updateQualityRow() {
+            qualityRow.style.display = formatSelect.value === 'image/png' ? 'none' : 'block';
+        }
+
+        function loadFile(file) {
+            if (!file) { return; }
+            if (!file.type || file.type.indexOf('image/') !== 0) {
+                setStatus('Please choose an image file (JPG, PNG or WEBP).', true);
+                return;
+            }
+            if (objectUrl) { URL.revokeObjectURL(objectUrl); }
+            objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = function () {
+                imgEl = img;
+                currentFile = file;
+                ratio = img.naturalWidth / img.naturalHeight;
+                imagePreview.src = objectUrl;
+                imagePreview.style.display = 'inline-block';
+                widthInput.value = img.naturalWidth;
+                heightInput.value = img.naturalHeight;
+                origInfo.textContent = 'Original: ' + img.naturalWidth + ' x ' + img.naturalHeight + ' px, ' + fmtBytes(file.size);
+                if (file.type === 'image/png') { formatSelect.value = 'image/png'; }
+                else if (file.type === 'image/webp') { formatSelect.value = 'image/webp'; }
+                else { formatSelect.value = 'image/jpeg'; }
+                updateQualityRow();
+                controlSection.style.display = 'block';
+                setStatus('', false);
+            };
+            img.onerror = function () {
+                setStatus('This image could not be opened. Try a JPG, PNG or WEBP file.', true);
+            };
+            img.src = objectUrl;
+        }
+
+        dropZone.addEventListener('click', function () { imageInput.click(); });
+        dropZone.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); imageInput.click(); }
+        });
+        imageInput.addEventListener('change', function (e) {
+            loadFile(e.target.files[0]);
+            imageInput.value = '';
+        });
+        ['dragenter', 'dragover'].forEach(function (ev) {
+            dropZone.addEventListener(ev, function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+            dropZone.addEventListener(ev, function (e) { e.preventDefault(); dropZone.classList.remove('dragover'); });
+        });
+        dropZone.addEventListener('drop', function (e) {
+            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            loadFile(f);
+        });
+
+        widthInput.addEventListener('input', function () {
+            if (lockChk.checked && imgEl) {
+                const w = parseInt(widthInput.value, 10);
+                if (w > 0) { heightInput.value = Math.max(1, Math.round(w / ratio)); }
+            }
+        });
+        heightInput.addEventListener('input', function () {
+            if (lockChk.checked && imgEl) {
+                const h = parseInt(heightInput.value, 10);
+                if (h > 0) { widthInput.value = Math.max(1, Math.round(h * ratio)); }
+            }
+        });
+        document.querySelectorAll('[data-pct]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (!imgEl) { return; }
+                const p = parseInt(btn.getAttribute('data-pct'), 10) / 100;
+                widthInput.value = Math.max(1, Math.round(imgEl.naturalWidth * p));
+                heightInput.value = Math.max(1, Math.round(imgEl.naturalHeight * p));
+            });
+        });
+        formatSelect.addEventListener('change', updateQualityRow);
+        qualityRange.addEventListener('input', function () { qualityVal.textContent = qualityRange.value; });
+
+        resizeBtn.addEventListener('click', function () {
+            if (!imgEl) { return; }
+            const w = parseInt(widthInput.value, 10);
+            const h = parseInt(heightInput.value, 10);
+            if (!w || !h || w <= 0 || h <= 0) {
+                setStatus('Please enter a valid width and height.', true);
+                return;
+            }
+            if (w > MAX_SIDE || h > MAX_SIDE || w * h > MAX_PIXELS) {
+                setStatus('That size is too large for a browser. Please choose a smaller width and height.', true);
+                return;
+            }
+
+            const fmt = formatSelect.value;
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const c = canvas.getContext('2d');
+            if (!c) { setStatus('Your browser could not create the image. Try a smaller size.', true); return; }
+            if (fmt === 'image/jpeg') {
+                c.fillStyle = '#ffffff';
+                c.fillRect(0, 0, w, h);
+            }
+            c.imageSmoothingEnabled = true;
+            c.imageSmoothingQuality = 'high';
+            c.drawImage(imgEl, 0, 0, w, h);
+
+            const q = parseInt(qualityRange.value, 10) / 100;
+            resizeBtn.disabled = true;
+            setStatus('Creating your image...', false);
+
+            canvas.toBlob(function (blob) {
+                resizeBtn.disabled = false;
+                if (!blob) {
+                    setStatus('Could not create the image. Try a smaller size or a different format.', true);
+                    return;
+                }
+                const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+                const ext = extMap[blob.type] || 'png';
+                const base = (currentFile && currentFile.name ? currentFile.name.replace(/\.[^.]+$/, '') : 'image');
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = base + '-resized.' + ext;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+                let msg = 'Done! New image: ' + w + ' x ' + h + ' px, ' + fmtBytes(blob.size) + ' (' + ext.toUpperCase() + ').';
+                if (blob.type !== fmt) { msg += ' Your browser saved it as ' + ext.toUpperCase() + ' because it does not support the chosen format.'; }
+                setStatus(msg, false);
+            }, fmt, q);
+        });
+    </script>
+</body>
+</html>
